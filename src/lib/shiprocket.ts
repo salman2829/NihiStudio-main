@@ -125,18 +125,23 @@ export async function createShiprocketOrder(params: CreateShiprocketOrderParams)
   const pad = (n: number) => n.toString().padStart(2, '0');
   const formattedDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
+  const fullName = (params.customerName || `${params.shippingAddress.firstName || ''} ${params.shippingAddress.lastName || ''}`).trim() || 'Valued Customer';
+  const nameParts = fullName.split(' ');
+  const firstName = params.shippingAddress.firstName || nameParts[0] || 'Customer';
+  const lastName = params.shippingAddress.lastName || nameParts.slice(1).join(' ') || firstName;
   const rawAddress = (params.shippingAddress.address1 || '').trim();
   const cleanAddress = rawAddress.length < 10 ? `${rawAddress || 'Main Street'}, Near City Center` : rawAddress;
   const cleanPhone = (params.shippingAddress.phone || params.customerPhone || '9876543210').replace(/\D/g, '').slice(-10) || '9876543210';
   const cleanPincode = (params.shippingAddress.postcode || '500046').replace(/\D/g, '').slice(0, 6) || '500046';
   const cleanCity = params.shippingAddress.city || 'Hyderabad';
   const cleanState = params.shippingAddress.state || 'Telangana';
+  const cleanEmail = (params.customerEmail || 'care@nihistudio.com').trim().toLowerCase();
 
   const orderItems = (params.items || []).map((item, idx) => ({
-    name: `${item.productName || 'Fine Jewelry'}${item.variantName ? ` (${item.variantName})` : ''}`.slice(0, 50),
+    name: `${item.productName || 'Fine Jewelry'}${item.variantName ? ` (${item.variantName})` : ''}`.replace(/[^\w\s\-,]/g, '').slice(0, 50),
     sku: item.sku || `NIHI-${idx + 1}-${String(item.productId || 'JEWEL').replace(/\D/g, '') || '01'}`,
-    units: item.quantity || 1,
-    selling_price: Math.max(1, item.priceINR || 1),
+    units: Number(item.quantity) || 1,
+    selling_price: Math.max(1, Number(item.priceINR) || 1),
     discount: 0,
     tax: 0,
   }));
@@ -145,6 +150,8 @@ export async function createShiprocketOrder(params: CreateShiprocketOrderParams)
     order_id: params.orderId,
     order_date: params.orderDate || formattedDate,
     pickup_location: pickupLocation,
+    channel_id: '',
+    comment: 'Nihi Studio Fine Jewelry Order',
     billing_customer_name: firstName.slice(0, 30),
     billing_last_name: lastName.slice(0, 30),
     billing_address: cleanAddress.slice(0, 100),
@@ -153,17 +160,27 @@ export async function createShiprocketOrder(params: CreateShiprocketOrderParams)
     billing_pincode: cleanPincode,
     billing_state: cleanState.slice(0, 50),
     billing_country: params.shippingAddress.country || 'India',
-    billing_email: params.customerEmail || 'care@nihistudio.com',
+    billing_email: cleanEmail,
     billing_phone: cleanPhone,
-    shipping_is_billing: true,
+    shipping_is_billing: 1,
+    shipping_customer_name: firstName.slice(0, 30),
+    shipping_last_name: lastName.slice(0, 30),
+    shipping_address: cleanAddress.slice(0, 100),
+    shipping_address_2: (params.shippingAddress.address2 || '').slice(0, 100),
+    shipping_city: cleanCity.slice(0, 50),
+    shipping_pincode: cleanPincode,
+    shipping_state: cleanState.slice(0, 50),
+    shipping_country: params.shippingAddress.country || 'India',
+    shipping_email: cleanEmail,
+    shipping_phone: cleanPhone,
     order_items: orderItems.length > 0 ? orderItems : [{
       name: 'Nihi Fine Jewelry Item',
       sku: 'NIHI-JW-01',
       units: 1,
-      selling_price: Math.max(1, params.total || 1),
+      selling_price: Math.max(1, Number(params.total) || 1),
     }],
     payment_method: params.paymentMethod === 'COD' || params.paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-    sub_total: Math.max(1, params.subtotal || params.total || 1),
+    sub_total: Math.max(1, Number(params.subtotal || params.total) || 1),
     length: params.dimensions?.length || 10,
     breadth: params.dimensions?.breadth || 10,
     height: params.dimensions?.height || 5,
