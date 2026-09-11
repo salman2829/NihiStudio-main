@@ -1,69 +1,87 @@
-import Image from "next/image";
+import React from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowRight, Sparkles, Gift, ShieldCheck } from 'lucide-react';
+import HeroSlider from '@/components/HeroSlider';
+import CategoryStrip from '@/components/CategoryStrip';
+import ProductGrid from '@/components/ProductGrid';
+import ShopByMetal from '@/components/ShopByMetal';
+import TrustBadges from '@/components/TrustBadges';
+import Testimonials from '@/components/Testimonials';
+import InstagramReel from '@/components/InstagramReel';
+import { getProducts } from '@/lib/woocommerce';
 
-export default function Home() {
+export default async function HomePage() {
+  const products = await getProducts();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="space-y-0">
+      {/* Hero Autoplay Slider */}
+      <HeroSlider />
+
+      {/* Circular Category Strip */}
+      <CategoryStrip />
+
+      {/* Bestsellers & New Arrivals Grid */}
+      <ProductGrid products={products} />
+
+      {/* Shop By Metal / Gemstone */}
+      <ShopByMetal />
+
+      {/* Luxury Gifting Feature Banner */}
+      <section className="py-12 sm:py-16 bg-[#FDF0F3] border-y border-[#F5D5DD]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center bg-white rounded-3xl p-6 sm:p-12 shadow-sm border border-[#EFE9E6] overflow-hidden relative">
+            <div className="space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF7F5] text-[#E9708A] text-xs font-semibold uppercase tracking-widest border border-rose-200">
+                <Gift className="w-3.5 h-3.5 text-[#D4AF37]" /> The Art of Gifting
+              </div>
+              <h2 className="text-2xl sm:text-4xl font-serif font-semibold text-gray-900 leading-tight">
+                Complimentary Wax-Sealed Letter & Luxury Velvet Box
+              </h2>
+              <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                Turn your gift into an unforgettable heirloom. Every personalized piece arrives in a plush emerald or blush velvet box, accompanied by a custom laser engraving and your personalized message sealed in royal metallic wax.
+              </p>
+              <div className="flex flex-wrap gap-4 pt-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" /> Free Laser Engraving
+                </div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-gray-800">
+                  <ShieldCheck className="w-4 h-4 text-[#E9708A]" /> Authenticity Certificate Included
+                </div>
+              </div>
+              <div className="pt-3">
+                <Link
+                  href="/shop?category=Gifts"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 bg-[#1A1818] hover:bg-black text-white text-xs sm:text-sm font-semibold uppercase tracking-widest rounded-full transition-all shadow-md group"
+                >
+                  Explore Gift Studio
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform text-[#E9708A]" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Visual Gifting Showcase */}
+            <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden shadow-inner">
+              <Image
+                src="https://images.unsplash.com/photo-1513094735237-8f2714d57c13?q=80&w=1000&auto=format&fit=crop"
+                alt="Nihi Studio Luxury Gift Packaging"
+                fill
+                className="object-cover hover:scale-105 transition-transform duration-700"
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
+
+      {/* Trust Badges Strip */}
+      <TrustBadges />
+
+      {/* Testimonials */}
+      <Testimonials />
+
+      {/* Instagram UGC Reel */}
+      <InstagramReel />
     </div>
   );
 }
