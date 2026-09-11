@@ -341,11 +341,33 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-4">
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-4 text-center">
         <ShoppingBag className="w-12 h-12 text-gray-300 mb-3" />
         <h2 className="text-xl font-serif font-semibold text-gray-800">Your shopping box is empty</h2>
-        <Link href="/shop" className="mt-4 text-xs font-bold text-[#E9708A] uppercase tracking-wider hover:underline">
-          Return to Shop
+        <p className="text-xs text-gray-500 mt-1 mb-5 max-w-sm">
+          Want to test the live Razorpay payment gateway right now? Click below to load the ₹1 test product.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            const { addToCart } = useStore.getState();
+            addToCart({
+              productId: 'nihi-test-1',
+              productName: '₹1 Live Payment Verification Item',
+              variantId: 'var-test-1',
+              variantName: 'Test Sample',
+              priceINR: 1,
+              priceUSD: 1,
+              quantity: 1,
+              image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
+            });
+          }}
+          className="px-6 py-3 bg-[#E9708A] hover:bg-[#d45d77] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md mb-3"
+        >
+          ⚡ Add ₹1 Test Product & Pay Now
+        </button>
+        <Link href="/shop" className="text-xs font-bold text-gray-500 uppercase tracking-wider hover:underline">
+          Or Browse Shop Collection
         </Link>
       </div>
     );

@@ -3,7 +3,7 @@
 import React, { useState, use, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { useParams, notFound } from 'next/navigation';
 import {
   Heart,
   Star,
@@ -23,13 +23,11 @@ import {
 import { PRODUCTS } from '@/lib/mock-data';
 import { useStore } from '@/store/useStore';
 
-export default function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = use(params);
-  const product = PRODUCTS.find((p) => p.slug === slug);
+export default function ProductDetailPage() {
+  const params = useParams();
+  const rawSlug = params?.slug;
+  const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug || '';
+  const product = PRODUCTS.find((p) => p.slug === slug || p.id === slug);
 
   if (!product) {
     notFound();

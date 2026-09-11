@@ -102,13 +102,34 @@ export default function CartDrawer() {
               <p className="text-xs text-gray-500 max-w-xs mx-auto">
                 Explore our everyday 925 hallmarked fine jewelry collections crafted for timeless sparkle.
               </p>
-              <Link
-                href="/shop"
-                onClick={() => setIsCartOpen(false)}
-                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#1A1818] text-white text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-black transition-colors"
-              >
-                Start Shopping <ArrowRight className="w-4 h-4" />
-              </Link>
+              <div className="pt-2 flex flex-col gap-2 items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const { addToCart } = useStore.getState();
+                    addToCart({
+                      productId: 'nihi-test-1',
+                      productName: '₹1 Live Payment Verification Item',
+                      variantId: 'var-test-1',
+                      variantName: 'Test Sample',
+                      priceINR: 1,
+                      priceUSD: 1,
+                      quantity: 1,
+                      image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
+                    });
+                  }}
+                  className="w-full max-w-xs py-2.5 px-4 bg-[#E9708A] hover:bg-[#d45d77] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-sm"
+                >
+                  ⚡ Add ₹1 Test Item & Checkout
+                </button>
+                <Link
+                  href="/shop"
+                  onClick={() => setIsCartOpen(false)}
+                  className="inline-flex items-center gap-2 px-6 py-2 bg-[#1A1818] text-white text-xs font-semibold uppercase tracking-wider rounded-lg hover:bg-black transition-colors"
+                >
+                  Browse Shop <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           ) : (
             cart.map((item) => {
