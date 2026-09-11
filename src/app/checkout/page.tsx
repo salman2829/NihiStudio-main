@@ -13,6 +13,13 @@ import {
   Sparkles,
   ShoppingBag,
   Gift,
+  Home,
+  Building2,
+  MapPin,
+  Edit3,
+  Check,
+  PlusCircle,
+  Phone,
 } from 'lucide-react';
 import { useStore } from '@/store/useStore';
 
@@ -35,35 +42,97 @@ const loadRazorpayScript = (): Promise<boolean> => {
   });
 };
 
+const INDIAN_STATES = [
+  'Andhra Pradesh',
+  'Arunachal Pradesh',
+  'Assam',
+  'Bihar',
+  'Chhattisgarh',
+  'Goa',
+  'Gujarat',
+  'Haryana',
+  'Himachal Pradesh',
+  'Jharkhand',
+  'Karnataka',
+  'Kerala',
+  'Madhya Pradesh',
+  'Maharashtra',
+  'Manipur',
+  'Meghalaya',
+  'Mizoram',
+  'Nagaland',
+  'Odisha',
+  'Punjab',
+  'Rajasthan',
+  'Sikkim',
+  'Tamil Nadu',
+  'Telangana',
+  'Tripura',
+  'Uttar Pradesh',
+  'Uttarakhand',
+  'West Bengal',
+  'Delhi',
+  'Chandigarh',
+  'Jammu and Kashmir',
+  'Ladakh',
+  'Puducherry',
+];
+
 export default function CheckoutPage() {
-  const { cart, clearCart, getCartTotal, currency, user } = useStore();
+  const { cart, clearCart, getCartTotal, currency, user, savedAddress, setSavedAddress } = useStore();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
-    state: '',
+    alternatePhone: '',
     pincode: '',
+    houseNo: '',
+    streetAddress: '',
+    landmark: '',
+    city: '',
+    state: 'Telangana',
+    addressType: 'Home' as 'Home' | 'Work',
+    saveAddress: true,
     paymentMethod: currency === 'INR' ? 'upi' : 'stripe',
   });
 
+  const [isEditingSavedAddress, setIsEditingSavedAddress] = useState(false);
+
   React.useEffect(() => {
-    if (user) {
+    // 1. Prefill from savedAddress in Zustand / LocalStorage if present
+    if (savedAddress) {
+      setFormData((prev) => ({
+        ...prev,
+        firstName: savedAddress.firstName || prev.firstName,
+        lastName: savedAddress.lastName || prev.lastName,
+        email: savedAddress.email || prev.email,
+        phone: savedAddress.phone || prev.phone,
+        alternatePhone: savedAddress.alternatePhone || prev.alternatePhone,
+        pincode: savedAddress.pincode || savedAddress.postcode || prev.pincode,
+        houseNo: savedAddress.houseNo || prev.houseNo,
+        streetAddress: savedAddress.streetAddress || savedAddress.address1 || prev.streetAddress,
+        landmark: savedAddress.landmark || prev.landmark,
+        city: savedAddress.city || prev.city,
+        state: savedAddress.state || prev.state,
+        addressType: savedAddress.addressType || 'Home',
+      }));
+    } else if (user) {
+      // 2. Or prefill from logged-in user profile
       setFormData((prev) => ({
         ...prev,
         firstName: user.firstName || prev.firstName,
         lastName: user.lastName || prev.lastName,
         email: user.email || prev.email,
         phone: user.shipping?.phone || user.billing?.phone || prev.phone,
-        address: user.shipping?.address1 || prev.address,
+        pincode: user.shipping?.pincode || user.shipping?.postcode || prev.pincode,
+        houseNo: user.shipping?.houseNo || '',
+        streetAddress: user.shipping?.streetAddress || user.shipping?.address1 || prev.streetAddress,
         city: user.shipping?.city || prev.city,
         state: user.shipping?.state || prev.state,
-        pincode: user.shipping?.postcode || prev.pincode,
       }));
     }
-  }, [user]);
+  }, [user, savedAddress]);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
@@ -86,27 +155,51 @@ export default function CheckoutPage() {
   const grandTotal = subtotal + shippingCost;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target as HTMLInputElement;
+    if (type === 'checkbox') {
+      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
+    const fullAddressLine1 = `${formData.houseNo ? `${formData.houseNo}, ` : ''}${formData.streetAddress}`.trim();
+    const fullAddressLine2 = `${formData.landmark ? `Near ${formData.landmark}` : ''} ${formData.addressType ? `(${formData.addressType})` : ''}`.trim();
+    const finalFormattedAddress = `${fullAddressLine1}${fullAddressLine2 ? `, ${fullAddressLine2}` : ''}`;
+
+    const shippingAddressPayload = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      address1: finalFormattedAddress || formData.streetAddress || 'Main Street, Landmark',
+      address2: fullAddressLine2,
+      houseNo: formData.houseNo,
+      streetAddress: formData.streetAddress,
+      landmark: formData.landmark,
+      addressType: formData.addressType,
+      city: formData.city || 'Hyderabad',
+      state: formData.state || 'Telangana',
+      postcode: formData.pincode || '500046',
+      pincode: formData.pincode || '500046',
+      phone: formData.phone,
+      alternatePhone: formData.alternatePhone,
+      email: formData.email,
+      country: currency === 'INR' ? 'India' : 'United States',
+    };
+
+    // Save to user storage if checkbox is checked
+    if (formData.saveAddress) {
+      setSavedAddress(shippingAddressPayload);
+    }
+
     const orderPayload = {
       customerName: `${formData.firstName} ${formData.lastName}`.trim(),
       customerEmail: formData.email,
       items: cart,
-      shippingAddress: {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        address1: formData.address,
-        city: formData.city,
-        state: formData.state,
-        postcode: formData.pincode,
-        phone: formData.phone,
-        country: currency === 'INR' ? 'India' : 'United States',
-      },
+      shippingAddress: shippingAddressPayload,
       subtotal,
       shippingCost,
       total: grandTotal,
@@ -123,7 +216,7 @@ export default function CheckoutPage() {
       isCod: formData.paymentMethod === 'cod',
       city: formData.city,
       pincode: formData.pincode,
-      address: formData.address,
+      address: finalFormattedAddress,
     };
 
     // Razorpay Flow for INR online payments (UPI, Cards, Netbanking)
@@ -297,12 +390,12 @@ export default function CheckoutPage() {
           <div className="p-5 rounded-2xl bg-[#FAF7F5] border border-gray-200/80 text-left space-y-3 text-xs text-gray-700">
             <div className="flex justify-between">
               <span className="text-gray-500">Estimated Dispatch:</span>
-              <span className="font-semibold text-gray-900">24–48 Business Hours</span>
+              <span className="font-semibold text-gray-900">24–48 Business Hours (Shiprocket Express)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-500">Delivery Address:</span>
-              <span className="font-semibold text-gray-900 text-right max-w-[240px] truncate">
-                {confirmedSummary?.city || formData.city || 'Kamareddy'}, {confirmedSummary?.pincode || formData.pincode || '503108'}
+              <span className="font-semibold text-gray-900 text-right max-w-[260px] truncate">
+                {confirmedSummary?.address || `${formData.city}, ${formData.pincode}`}
               </span>
             </div>
             <div className="flex justify-between items-center pt-2.5 border-t border-gray-200/60">
@@ -354,11 +447,13 @@ export default function CheckoutPage() {
             addToCart({
               productId: 'nihi-test-1',
               productName: '₹1 Live Payment Verification Item',
+              slug: 'nihi-test-verification-item',
               variantId: 'var-test-1',
               variantName: 'Test Sample',
               priceINR: 1,
               priceUSD: 1,
               quantity: 1,
+              giftWrap: false,
               image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
             });
           }}
@@ -372,6 +467,8 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const hasSavedAddress = Boolean(savedAddress && savedAddress.streetAddress && savedAddress.city);
 
   return (
     <div className="bg-[#FAF7F5]/40 min-h-screen py-8 sm:py-12">
@@ -388,106 +485,350 @@ export default function CheckoutPage() {
         <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left: Customer Information & Payment Method */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Contact Details */}
-            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EFE9E6] shadow-xs space-y-4">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
-                1. Customer & Delivery Address
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">First Name *</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    required
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    placeholder="Ananya"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
+            {/* Delivery Address Section */}
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EFE9E6] shadow-xs space-y-5">
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-[#1A1818] text-white text-xs font-bold flex items-center justify-center">
+                    1
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                    Delivery Address
+                  </h2>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Last Name *</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    required
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    placeholder="Sharma"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Email Address (for order tracking) *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="ananya@example.com"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Phone Number *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="+91 98765 43210"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-medium text-gray-600 block mb-1">Apartment / House No / Street Address *</label>
-                  <input
-                    type="text"
-                    name="address"
-                    required
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    placeholder="Flat 402, Radiant Residency, Palm Avenue"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">City *</label>
-                  <input
-                    type="text"
-                    name="city"
-                    required
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    placeholder="Bengaluru"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1">PIN / Zip Code *</label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    required
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    placeholder="560001"
-                    className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A]"
-                  />
-                </div>
+                {hasSavedAddress && !isEditingSavedAddress && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingSavedAddress(true)}
+                    className="text-xs font-semibold text-[#E9708A] hover:text-[#d45d77] flex items-center gap-1 cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Edit / Change
+                  </button>
+                )}
               </div>
+
+              {/* Flipkart-Style Saved Address Card if available and not in editing mode */}
+              {hasSavedAddress && !isEditingSavedAddress ? (
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-[#E9708A] bg-[#FDF0F3]/30 space-y-3 relative transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-gray-900 text-sm">
+                        {formData.firstName} {formData.lastName}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-gray-900 text-white rounded-md">
+                        {formData.addressType || 'Home'}
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Selected Address
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-700 leading-relaxed">
+                    {formData.houseNo ? `${formData.houseNo}, ` : ''}{formData.streetAddress}
+                    {formData.landmark ? `, Near ${formData.landmark}` : ''}
+                    , {formData.city}, {formData.state} - <strong className="font-mono">{formData.pincode}</strong>
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 pt-1">
+                    <span className="flex items-center gap-1 font-medium">
+                      <Phone className="w-3.5 h-3.5 text-gray-400" /> +91 {formData.phone}
+                    </span>
+                    {formData.alternatePhone && (
+                      <span className="text-gray-500">
+                        Alt: +91 {formData.alternatePhone}
+                      </span>
+                    )}
+                    <span className="text-gray-500">
+                      📧 {formData.email}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingSavedAddress(true)}
+                      className="text-xs font-semibold text-gray-700 hover:text-black underline cursor-pointer"
+                    >
+                      + Add New or Modify Address
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Full Flipkart-Style Address Form */
+                <div className="space-y-4">
+                  {hasSavedAddress && isEditingSavedAddress && (
+                    <div className="flex items-center justify-between pb-1">
+                      <span className="text-xs font-semibold text-gray-500">Editing delivery details:</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingSavedAddress(false)}
+                        className="text-xs text-[#E9708A] hover:underline"
+                      >
+                        Cancel & Use Saved
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Section: Recipient Contact */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        First Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        required
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Ananya"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Last Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        required
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Sharma"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        10-Digit Mobile Number <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs font-semibold text-gray-500">+91</span>
+                        <input
+                          type="tel"
+                          name="phone"
+                          required
+                          maxLength={10}
+                          pattern="[0-9]{10}"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder="9876543210"
+                          className="w-full pl-11 pr-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Alternate Mobile <span className="text-gray-400 font-normal">(Optional for delivery)</span>
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5 text-xs font-semibold text-gray-500">+91</span>
+                        <input
+                          type="tel"
+                          name="alternatePhone"
+                          maxLength={10}
+                          value={formData.alternatePhone}
+                          onChange={handleInputChange}
+                          placeholder="9123456780"
+                          className="w-full pl-11 pr-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all font-mono"
+                        />
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Email Address (for order tracking & certificate) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        required
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder="ananya@example.com"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section: Detailed Flipkart Address Fields */}
+                  <div className="pt-2 border-t border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Pincode <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="pincode"
+                        required
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        value={formData.pincode}
+                        onChange={handleInputChange}
+                        placeholder="e.g. 500046"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        State <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="state"
+                        required
+                        value={formData.state}
+                        onChange={handleInputChange}
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      >
+                        {INDIAN_STATES.map((st) => (
+                          <option key={st} value={st}>
+                            {st}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        City / District <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="city"
+                        required
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Hyderabad / Kamareddy"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Flat, House No., Building, Apartment <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="houseNo"
+                        required
+                        value={formData.houseNo}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Flat 402, Radiant Towers"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Area, Colony, Street, Sector, Village <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="streetAddress"
+                        required
+                        value={formData.streetAddress}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Road No 36, Jubilee Hills / Main Bazar"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-medium text-gray-700 block mb-1">
+                        Landmark <span className="text-gray-400 font-normal">(Optional, e.g. Near Apollo Hospital, Opp Bus Stand)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="landmark"
+                        value={formData.landmark}
+                        onChange={handleInputChange}
+                        placeholder="e.g. Near Big Bazaar / Beside SBI Bank"
+                        className="w-full px-3.5 py-2.5 bg-[#FAF7F5] border border-gray-200 rounded-xl text-xs text-gray-900 focus:outline-none focus:border-[#E9708A] focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section: Address Type (Home vs Work) */}
+                  <div className="pt-2 border-t border-gray-100">
+                    <label className="text-xs font-semibold text-gray-800 block mb-2">
+                      Address Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label
+                        className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                          formData.addressType === 'Home'
+                            ? 'border-[#E9708A] bg-[#FDF0F3]/50 text-gray-900 font-semibold'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="addressType"
+                          value="Home"
+                          checked={formData.addressType === 'Home'}
+                          onChange={handleInputChange}
+                          className="accent-[#E9708A]"
+                        />
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Home className="w-3.5 h-3.5 text-[#E9708A]" />
+                          <div>
+                            <p className="font-semibold leading-tight">Home</p>
+                            <p className="text-[10px] text-gray-500 font-normal">All-day delivery</p>
+                          </div>
+                        </div>
+                      </label>
+
+                      <label
+                        className={`flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-all ${
+                          formData.addressType === 'Work'
+                            ? 'border-[#E9708A] bg-[#FDF0F3]/50 text-gray-900 font-semibold'
+                            : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="addressType"
+                          value="Work"
+                          checked={formData.addressType === 'Work'}
+                          onChange={handleInputChange}
+                          className="accent-[#E9708A]"
+                        />
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <Building2 className="w-3.5 h-3.5 text-gray-600" />
+                          <div>
+                            <p className="font-semibold leading-tight">Work / Office</p>
+                            <p className="text-[10px] text-gray-500 font-normal">10 AM - 6 PM</p>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Section: Save address for faster future checkout */}
+                  <div className="pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-gray-700">
+                      <input
+                        type="checkbox"
+                        name="saveAddress"
+                        checked={formData.saveAddress}
+                        onChange={handleInputChange}
+                        className="rounded accent-[#E9708A] w-4 h-4"
+                      />
+                      <span>Save this delivery address for faster 1-click checkout next time</span>
+                    </label>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment Method Selector */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EFE9E6] shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
-                  2. Payment Gateway & Options
-                </h2>
+              <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full bg-[#1A1818] text-white text-xs font-bold flex items-center justify-center">
+                    2
+                  </div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                    Payment Gateway & Options
+                  </h2>
+                </div>
                 <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
                   {currency === 'INR' ? '🇮🇳 Razorpay Instant UPI' : '🇺🇸 Stripe / PayPal Global'}
                 </span>

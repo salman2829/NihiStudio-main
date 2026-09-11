@@ -46,7 +46,7 @@ export interface Product {
   metal: '925 Sterling Silver' | '18K Gold Plated' | '14K Rose Gold' | 'Lab-grown Diamonds';
   rating: number;
   reviewCount: number;
-  badge?: 'Bestseller' | 'New Arrival' | 'Trending' | 'Editor\'s Pick' | 'Sale';
+  badge?: 'Bestseller' | 'New Arrival' | 'Trending' | 'Editor\'s Pick' | 'Sale' | '₹1 Test Mode';
   description: string;
   details: string[];
   dimensions?: string;
@@ -92,14 +92,20 @@ export interface CustomerAddress {
   firstName: string;
   lastName: string;
   company?: string;
-  address1: string;
-  address2?: string;
+  phone?: string;
+  alternatePhone?: string;
+  email?: string;
+  pincode?: string;
+  postcode?: string;
+  houseNo?: string; // Flat, House no., Building, Company, Apartment
+  streetAddress?: string; // Area, Colony, Street, Sector, Village
+  landmark?: string; // Landmark (Optional, e.g. Near Apollo Hospital)
   city: string;
   state: string;
-  postcode: string;
   country: string;
-  email?: string;
-  phone?: string;
+  addressType?: 'Home' | 'Work'; // Home (All day delivery) | Work (Delivery 10 AM - 6 PM)
+  address1: string;
+  address2?: string;
 }
 
 export interface User {

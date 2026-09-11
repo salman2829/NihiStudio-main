@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CartItem, CurrencyType, User } from '@/lib/types';
+import { CartItem, CurrencyType, User, CustomerAddress } from '@/lib/types';
 
 interface StoreState {
   // Cart
@@ -33,6 +33,10 @@ interface StoreState {
   setIsAuthModalOpen: (open: boolean, tab?: 'login' | 'register') => void;
   fetchCurrentUser: () => Promise<void>;
   logout: () => Promise<void>;
+
+  // Saved Delivery Address
+  savedAddress: CustomerAddress | null;
+  setSavedAddress: (address: CustomerAddress | null) => void;
 
   // Modals & UI
   isSearchOpen: boolean;
@@ -158,6 +162,10 @@ export const useStore = create<StoreState>()(
         }
       },
 
+      // Saved Address
+      savedAddress: null,
+      setSavedAddress: (address) => set({ savedAddress: address }),
+
       // Modals
       isSearchOpen: false,
       setIsSearchOpen: (open) => set({ isSearchOpen: open }),
@@ -174,6 +182,7 @@ export const useStore = create<StoreState>()(
         currency: state.currency,
         country: state.country,
         user: state.user,
+        savedAddress: state.savedAddress,
       }),
     }
   )

@@ -110,11 +110,13 @@ export default function CartDrawer() {
                     addToCart({
                       productId: 'nihi-test-1',
                       productName: '₹1 Live Payment Verification Item',
+                      slug: 'nihi-test-verification-item',
                       variantId: 'var-test-1',
                       variantName: 'Test Sample',
                       priceINR: 1,
                       priceUSD: 1,
                       quantity: 1,
+                      giftWrap: false,
                       image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
                     });
                   }}
