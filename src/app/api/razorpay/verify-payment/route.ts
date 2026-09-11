@@ -90,23 +90,29 @@ export async function POST(request: Request) {
     }
 
     // 3. Automatically Create Order in Shiprocket for Dispatch
+    let shiprocketResult = null;
     if (orderDetails && orderDetails.shippingAddress) {
-      createShiprocketOrder({
-        orderId: generatedOrderId,
-        customerName: orderDetails.customerName || `${orderDetails.shippingAddress.firstName || ''} ${orderDetails.shippingAddress.lastName || ''}`.trim(),
-        customerEmail: orderDetails.customerEmail,
-        customerPhone: orderDetails.shippingAddress.phone,
-        shippingAddress: orderDetails.shippingAddress,
-        items: orderDetails.items || [],
-        subtotal: orderDetails.subtotal,
-        total: orderDetails.total,
-        paymentMethod: 'Prepaid',
-      }).catch((err) => console.error('[Shiprocket Order Dispatch Error]:', err));
+      try {
+        shiprocketResult = await createShiprocketOrder({
+          orderId: generatedOrderId,
+          customerName: orderDetails.customerName || `${orderDetails.shippingAddress.firstName || ''} ${orderDetails.shippingAddress.lastName || ''}`.trim(),
+          customerEmail: orderDetails.customerEmail,
+          customerPhone: orderDetails.shippingAddress.phone,
+          shippingAddress: orderDetails.shippingAddress,
+          items: orderDetails.items || [],
+          subtotal: orderDetails.subtotal,
+          total: orderDetails.total,
+          paymentMethod: 'Prepaid',
+        });
+        console.log('[Shiprocket Dispatch Result]:', shiprocketResult);
+      } catch (err: any) {
+        console.error('[Shiprocket Order Dispatch Error]:', err.message);
+      }
     }
 
     // 4. Dispatch confirmation and shipping details email
     if (orderDetails && orderDetails.customerEmail) {
-      sendOrderConfirmationEmail({
+      await sendOrderConfirmationEmail({
         orderId: generatedOrderId,
         customerEmail: orderDetails.customerEmail,
         customerName: orderDetails.customerName,

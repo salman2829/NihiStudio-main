@@ -85,17 +85,21 @@ export async function POST(request: Request) {
 
     // 2. Automatically dispatch order to Shiprocket
     if (shippingAddress) {
-      createShiprocketOrder({
-        orderId: generatedOrderId,
-        customerName: customerName || `${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}`.trim(),
-        customerEmail: customerEmail.trim().toLowerCase(),
-        customerPhone: shippingAddress.phone,
-        shippingAddress: shippingAddress,
-        items: items,
-        subtotal: subtotal || total,
-        total: total,
-        paymentMethod: paymentMethod === 'cod' ? 'COD' : 'Prepaid',
-      }).catch((err) => console.error('[Shiprocket Order Dispatch Error]:', err));
+       try {
+         await createShiprocketOrder({
+           orderId: generatedOrderId,
+           customerName: customerName || `${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}`.trim(),
+           customerEmail: customerEmail.trim().toLowerCase(),
+           customerPhone: shippingAddress.phone,
+           shippingAddress: shippingAddress,
+           items: items,
+           subtotal: subtotal || total,
+           total: total,
+           paymentMethod: paymentMethod === 'cod' ? 'COD' : 'Prepaid',
+         });
+       } catch (err: any) {
+         console.error('[Shiprocket Order Dispatch Error]:', err.message);
+       }
     }
 
     // 3. Dispatch real Order Confirmation & Shipping Email to Customer
