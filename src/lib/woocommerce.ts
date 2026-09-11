@@ -41,7 +41,7 @@ export async function getProducts(): Promise<Product[]> {
     }
 
     // Map WooCommerce product format to Nihi Studio product model
-    return data.map((item: any, index: number): Product => {
+    const mappedProducts: Product[] = data.map((item: any, index: number): Product => {
       const regularPrice = parseFloat(item.regular_price || item.price || '2999');
       const salePrice = parseFloat(item.sale_price || item.price || '2499');
       const priceUSD = Math.round(salePrice / 80);
@@ -105,6 +105,8 @@ export async function getProducts(): Promise<Product[]> {
         reviews: PRODUCTS[0].reviews,
       };
     });
+
+    return [PRODUCTS[0], ...mappedProducts];
   } catch (error) {
     console.error('Failed to fetch from WooCommerce:', error);
     return PRODUCTS;
@@ -115,6 +117,9 @@ export async function getProducts(): Promise<Product[]> {
  * Fetch a single product by slug
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const directMatch = PRODUCTS.find((p) => p.slug === slug);
+  if (directMatch) return directMatch;
+
   const products = await getProducts();
   return products.find((p) => p.slug === slug);
 }
