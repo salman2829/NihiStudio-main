@@ -81,7 +81,7 @@ export default function CheckoutPage() {
 
   const totals = getCartTotal();
   const subtotal = currency === 'INR' ? totals.inr : totals.usd;
-  const isFreeShipping = subtotal >= (currency === 'INR' ? 999 : 15);
+  const isFreeShipping = subtotal >= (currency === 'INR' ? 999 : 15) || subtotal <= 5;
   const shippingCost = isFreeShipping ? 0 : currency === 'INR' ? 99 : 5;
   const grandTotal = subtotal + shippingCost;
 
