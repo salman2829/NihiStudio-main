@@ -37,11 +37,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Fetch or Create Customer in WooCommerce
+    // 2. Fetch or Create Customer in WooCommerce / Local Store
     let user = await findWooCustomerByEmail(email);
     let isNewCustomer = false;
 
-    if (mode === 'register' && !user) {
+    if (!user) {
       isNewCustomer = true;
       const createRes = await createWooCustomer({
         email,
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
       if (!createRes.success || !createRes.user) {
         return NextResponse.json(
-          { error: createRes.error || 'Failed to create customer profile in WooCommerce.' },
+          { error: createRes.error || 'Failed to create customer profile.' },
           { status: 400 }
         );
       }
@@ -62,30 +62,28 @@ export async function POST(request: Request) {
       sendWelcomeEmail(email, firstName || user.firstName).catch((err) =>
         console.error('Failed to send welcome email:', err)
       );
-    } else if (!user) {
-      // If user not found during login, create customer profile
-      const createRes = await createWooCustomer({
-        email,
-        firstName: email.split('@')[0],
-        lastName: '',
-      });
-      if (createRes.user) {
-        user = createRes.user;
-      } else {
-        return NextResponse.json(
-          { error: 'User account not found.' },
-          { status: 404 }
-        );
+    } else if (mode === 'register' && firstName) {
+      // User exists and provided a name during registration, update if missing
+      if (!user.firstName || user.firstName === email.split('@')[0]) {
+        user.firstName = firstName;
+        if (lastName) user.lastName = lastName;
+        user.displayName = `${firstName} ${lastName || user.lastName || ''}`.trim();
       }
     }
 
     // 3. Generate Session Token
     const token = createSessionToken(user);
 
+    const message = isNewCustomer
+      ? 'Account created successfully!'
+      : mode === 'register'
+      ? 'Account verified! Welcome back.'
+      : 'Welcome back!';
+
     const response = NextResponse.json({
       success: true,
       user,
-      message: mode === 'register' ? 'Account created successfully!' : 'Welcome back!',
+      message,
     });
 
     // Clear the short-lived challenge cookie

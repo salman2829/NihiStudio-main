@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifySessionToken, getWooCustomerById } from '@/lib/woocommerce-auth';
+import { User } from '@/lib/types';
 
 export async function GET() {
   try {
@@ -16,14 +17,28 @@ export async function GET() {
       return NextResponse.json({ user: null });
     }
 
-    // Refresh live customer data from WooCommerce
-    const user = await getWooCustomerById(session.id);
-    if (!user) {
-      return NextResponse.json({ user: null });
+    // Refresh live customer data from WooCommerce or local store
+    const liveUser = await getWooCustomerById(session.id);
+    if (liveUser) {
+      return NextResponse.json({ user: liveUser });
     }
 
-    return NextResponse.json({ user });
+    // Resilient fallback from signed session payload
+    const sessionUser: User = {
+      id: session.id,
+      email: session.email,
+      firstName: session.firstName || '',
+      lastName: session.lastName || '',
+      displayName: session.displayName || session.firstName || session.email?.split('@')[0] || 'Member',
+      role: session.role || 'customer',
+      avatarUrl: session.avatarUrl,
+      billing: session.billing,
+      shipping: session.shipping,
+    };
+
+    return NextResponse.json({ user: sessionUser });
   } catch (error: any) {
     return NextResponse.json({ user: null });
   }
 }
+
