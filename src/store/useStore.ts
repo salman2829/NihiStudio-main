@@ -148,17 +148,22 @@ export const useStore = create<StoreState>()(
           if (res.ok) {
             const data = await res.json();
             set({ user: data.user || null });
+          } else {
+            set({ user: null });
           }
         } catch {
-          // ignore error
+          set({ user: null });
         }
       },
       logout: async () => {
         try {
           await fetch('/api/auth/logout', { method: 'POST' });
-          set({ user: null });
+          set({ user: null, savedAddress: null });
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('nihi-studio-storage');
+          }
         } catch {
-          set({ user: null });
+          set({ user: null, savedAddress: null });
         }
       },
 
@@ -181,8 +186,6 @@ export const useStore = create<StoreState>()(
         wishlist: state.wishlist,
         currency: state.currency,
         country: state.country,
-        user: state.user,
-        savedAddress: state.savedAddress,
       }),
     }
   )

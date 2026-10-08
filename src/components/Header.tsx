@@ -128,23 +128,13 @@ export default function Header() {
 
           {/* Brand Logo */}
           <div className="text-center flex-1 lg:flex-none">
-            <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <Image
-                src="/logo.png"
-                alt="Nihi Studio Fine Jewelry"
-                width={48}
-                height={48}
-                priority
-                className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
-              />
-              <div className="text-left">
-                <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#1A1818] block group-hover:text-[#E9708A] transition-colors leading-tight">
-                  NIHI STUDIO
-                </span>
-                <span className="text-[8px] sm:text-[9px] font-semibold tracking-[0.25em] text-[#D4AF37] uppercase block">
-                  Fine Jewelry
-                </span>
-              </div>
+            <Link href="/" className="inline-block group">
+              <span className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1818] block group-hover:text-[#E9708A] transition-colors">
+                NIHI STUDIO
+              </span>
+              <span className="text-[9px] sm:text-[10px] font-semibold tracking-[0.25em] text-[#D4AF37] uppercase block -mt-1">
+                Everyday Fine Jewelry
+              </span>
             </Link>
           </div>
 

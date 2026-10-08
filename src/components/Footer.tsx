@@ -71,22 +71,13 @@ export default function Footer() {
 
           {/* Brand Col */}
           <div className="col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5 group">
-              <Image
-                src="/logo.png"
-                alt="Nihi Studio Fine Jewelry Logo"
-                width={44}
-                height={48}
-                className="h-10 w-auto object-contain transition-transform group-hover:scale-105 filter brightness-110"
-              />
-              <div className="text-left">
-                <span className="font-serif text-2xl font-bold tracking-tight text-white block group-hover:text-[#E9708A] transition-colors leading-tight">
-                  NIHI STUDIO
-                </span>
-                <span className="text-[9px] font-semibold tracking-[0.25em] text-[#D4AF37] uppercase block">
-                  Everyday Fine Jewelry
-                </span>
-              </div>
+            <Link href="/" className="inline-block group">
+              <span className="font-serif text-2xl font-bold tracking-tight text-white block group-hover:text-[#E9708A] transition-colors">
+                NIHI STUDIO
+              </span>
+              <span className="text-[9px] font-semibold tracking-[0.25em] text-[#D4AF37] uppercase block -mt-1">
+                Everyday Fine Jewelry
+              </span>
             </Link>
             <p className="text-xs text-gray-400 leading-relaxed max-w-sm">
               Nihi Studio crafts timeless, accessible fine jewelry in pure 925 sterling silver and thick 18K gold vermeil, engineered with anti-tarnish e-coatings for everyday radiance.
