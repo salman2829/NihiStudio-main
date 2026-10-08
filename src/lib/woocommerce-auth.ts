@@ -3,9 +3,9 @@ import fs from 'fs';
 import path from 'path';
 import { User, Order, CustomerAddress } from './types';
 
-const WOOCOMMERCE_API_URL = process.env.NEXT_PUBLIC_WOOCOMMERCE_API_URL || process.env.WOOCOMMERCE_API_URL || 'https://nihistudio.com';
-const WOOCOMMERCE_CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY || '';
-const WOOCOMMERCE_CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET || '';
+const WOOCOMMERCE_API_URL = process.env.NEXT_PUBLIC_WOOCOMMERCE_API_URL || process.env.WOOCOMMERCE_API_URL || 'https://lightsalmon-squid-120374.hostingersite.com';
+const WOOCOMMERCE_CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_081a4a709e11de50c96e72c9d5d7177006277145';
+const WOOCOMMERCE_CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_a42e25a6fd53611ae3a08a571d3a4e5d256513c0';
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'nihi-studio-luxury-jewelry-session-secret-key-2026';
 
