@@ -48,8 +48,8 @@ export default function AnnouncementBar() {
             <ChevronLeft className="w-3.5 h-3.5" />
           </button>
           
-          <div className="h-5 flex items-center justify-center overflow-hidden min-w-[280px] sm:min-w-[400px]">
-            <p className="transition-all duration-500 transform animate-fadeIn text-[11px] sm:text-xs tracking-wider text-rose-50 font-normal">
+          <div className="h-5 flex items-center justify-center overflow-hidden w-full max-w-[280px] sm:max-w-xl">
+            <p className="transition-all duration-500 transform animate-fadeIn text-[10px] sm:text-xs tracking-wider text-rose-50 font-normal truncate px-1">
               {ANNOUNCEMENTS[currentIndex]}
             </p>
           </div>

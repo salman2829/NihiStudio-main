@@ -177,7 +177,7 @@ export default function ProductDetailPage() {
           {/* Left Column: Image Gallery with Magnifier Zoom */}
           <div className="lg:col-span-5 flex flex-col-reverse sm:flex-row gap-4">
             {/* Thumbnails list */}
-            <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto no-scrollbar shrink-0">
+            <div className="flex sm:flex-col gap-2.5 overflow-x-auto sm:overflow-y-auto no-scrollbar shrink-0 justify-center sm:justify-start">
               {images.map((img: string, idx: number) => (
                 <button
                   key={idx}
@@ -194,7 +194,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Main Interactive Magnifier View */}
-            <div className="flex-1 relative aspect-square max-w-md max-h-[440px] rounded-3xl overflow-hidden bg-[#FAF7F5] border border-[#EFE9E6] mx-auto sm:mx-0">
+            <div className="flex-1 relative aspect-square w-full sm:max-w-md rounded-3xl overflow-hidden bg-[#FAF7F5] border border-[#EFE9E6] mx-auto sm:mx-0 shadow-xs">
               <div
                 ref={imageContainerRef}
                 onMouseMove={handleMouseMove}
@@ -211,12 +211,12 @@ export default function ProductDetailPage() {
 
                 {/* Magnified Hover Layer */}
                 <div
-                  className="absolute inset-0 pointer-events-none rounded-3xl transition-opacity duration-150 shadow-2xl"
+                  className="absolute inset-0 pointer-events-none rounded-3xl transition-opacity duration-150 shadow-2xl hidden sm:block"
                   style={zoomStyle}
                 />
 
                 {/* Hover hint */}
-                <div className="absolute bottom-3 right-3 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] text-white font-medium pointer-events-none group-hover:opacity-0 transition-opacity">
+                <div className="absolute bottom-3 right-3 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-[10px] text-white font-medium pointer-events-none group-hover:opacity-0 transition-opacity hidden sm:block">
                   🔍 Roll cursor to zoom in
                 </div>
               </div>
@@ -642,6 +642,42 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Flipkart-Style Sticky Mobile Action Bar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-2.5 sm:p-3 flex items-center gap-2.5 z-40 shadow-2xl">
+        <button
+          onClick={handleAddToCart}
+          className={`flex-1 py-3 px-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md transition-all ${
+            isAddedToCart
+              ? 'bg-emerald-600 text-white shadow-emerald-600/30'
+              : 'bg-[#1A1818] text-white hover:bg-black'
+          }`}
+        >
+          {isAddedToCart ? (
+            <>
+              <Check className="w-4 h-4" /> Added!
+            </>
+          ) : (
+            <>
+              <ShoppingBag className="w-4 h-4 text-[#E9708A]" /> Add to Box
+            </>
+          )}
+        </button>
+
+        <Link
+          href={user ? '/checkout' : '#'}
+          onClick={(e) => {
+            handleAddToCart();
+            if (!user) {
+              e.preventDefault();
+              setIsAuthModalOpen(true, 'login');
+            }
+          }}
+          className="flex-1 py-3 px-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 bg-[#E9708A] hover:bg-[#C94D6A] text-white shadow-md text-center"
+        >
+          <Zap className="w-4 h-4" /> {user ? '1-Click Buy' : 'Sign In to Buy'}
+        </Link>
       </div>
     </div>
   );

@@ -127,27 +127,27 @@ export default function Header() {
           </div>
 
           {/* Brand Logo */}
-          <div className="text-center flex-1 lg:flex-none">
+          <div className="text-center shrink-0">
             <Link href="/" className="inline-block group">
-              <span className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-[#1A1818] block group-hover:text-[#E9708A] transition-colors">
+              <span className="font-serif text-lg sm:text-2xl md:text-3xl font-bold tracking-tight text-[#1A1818] block group-hover:text-[#E9708A] transition-colors whitespace-nowrap">
                 NIHI STUDIO
               </span>
-              <span className="text-[9px] sm:text-[10px] font-semibold tracking-[0.25em] text-[#D4AF37] uppercase block -mt-1">
+              <span className="text-[8px] sm:text-[9px] md:text-[10px] font-semibold tracking-[0.2em] text-[#D4AF37] uppercase block -mt-0.5 sm:-mt-1 whitespace-nowrap">
                 Everyday Fine Jewelry
               </span>
             </Link>
           </div>
 
           {/* Right Action Icons (Currency, User Account, Wishlist, Cart) */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 lg:flex-none justify-end">
+          <div className="flex items-center gap-1.5 sm:gap-3 justify-end">
             {/* Country / Currency Switcher */}
-            <div className="relative">
+            <div className="relative hidden sm:block">
               <button
                 onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold text-gray-700 hover:bg-[#FAF7F5] transition-colors border border-transparent hover:border-gray-200"
               >
                 <Globe className="w-3.5 h-3.5 text-gray-500" />
-                <span className="hidden sm:inline">{country === 'United States' ? 'USA' : 'India'}</span>
+                <span>{country === 'United States' ? 'USA' : 'India'}</span>
                 <span className="text-[#E9708A] font-bold">({currency})</span>
                 <ChevronDown className="w-3 h-3 text-gray-400" />
               </button>
