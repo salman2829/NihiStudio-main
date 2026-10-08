@@ -42,11 +42,11 @@ export interface Product {
   name: string;
   slug: string;
   subtitle: string;
-  category: 'Rings' | 'Earrings' | 'Necklaces' | 'Bracelets' | "Men's" | 'Silver 925' | 'Gifts';
-  metal: '925 Sterling Silver' | '18K Gold Plated' | '14K Rose Gold' | 'Lab-grown Diamonds';
+  category: string;
+  metal: string;
   rating: number;
   reviewCount: number;
-  badge?: 'Bestseller' | 'New Arrival' | 'Trending' | 'Editor\'s Pick' | 'Sale' | '₹1 Test Mode';
+  badge?: 'Bestseller' | 'New Arrival' | 'Trending' | 'Editor\'s Pick' | 'Sale' | '₹1 Test Mode' | 'Draft Preview' | string;
   description: string;
   details: string[];
   dimensions?: string;
@@ -56,7 +56,7 @@ export interface Product {
   allowsEngraving: boolean;
   engravingMaxChars?: number;
   hasSizes: boolean;
-  sizeType?: 'ring' | 'bangle' | 'necklace';
+  sizeType?: 'ring' | 'bangle' | 'necklace' | string;
   availableSizes?: string[];
   variants: ProductVariant[];
   priceBreakdown: PriceBreakdown;

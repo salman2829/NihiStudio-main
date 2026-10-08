@@ -22,48 +22,54 @@ export async function getProducts(): Promise<Product[]> {
 
   try {
     const auth = 'Basic ' + Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
-    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products?per_page=50&status=publish&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
+    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products?per_page=100&status=any&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
 
     const response = await fetch(apiUrl, {
       headers: {
         Authorization: auth,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 30 },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
       console.warn('WooCommerce API error response:', response.status, response.statusText);
-      return [];
+      return PRODUCTS;
     }
 
     const data = await response.json();
-    if (!Array.isArray(data)) {
-      return [];
+    if (!Array.isArray(data) || data.length === 0) {
+      return PRODUCTS;
     }
 
     // Map WooCommerce product format to Nihi Studio product model
     const mappedProducts: Product[] = data.map((item: any, index: number): Product => {
-      const regularPrice = parseFloat(item.regular_price || item.price || '0');
-      const salePrice = parseFloat(item.sale_price || item.price || '0');
-      const priceUSD = Math.round((salePrice || regularPrice) / 80);
-      const originalPriceUSD = Math.round((regularPrice || salePrice) / 80);
+      const rawRegular = parseFloat(item.regular_price || item.price || '0');
+      const rawSale = parseFloat(item.sale_price || item.price || '0');
+      const regularPrice = !isNaN(rawRegular) && rawRegular > 0 ? rawRegular : (!isNaN(rawSale) && rawSale > 0 ? rawSale : 1999);
+      const salePrice = !isNaN(rawSale) && rawSale > 0 ? rawSale : regularPrice;
+
+      const priceUSD = Math.round((salePrice || regularPrice) / 80) || 25;
+      const originalPriceUSD = Math.round((regularPrice || salePrice) / 80) || 30;
 
       const images = item.images?.length > 0 
         ? item.images.map((img: any) => img.src)
         : ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1000&auto=format&fit=crop'];
 
+      const categoryName = item.categories?.[0]?.name || 'Rings';
+      const isDraft = item.status === 'draft';
+
       return {
         id: `wc-${item.id}`,
-        name: item.name,
+        name: item.name || `Jewelry Item #${item.id}`,
         slug: item.slug || `product-${item.id}`,
-        subtitle: item.short_description?.replace(/<[^>]*>/g, '').slice(0, 100) || 'Handcrafted Fine Jewelry',
-        category: (item.categories?.[0]?.name as any) || 'Rings',
+        subtitle: item.short_description?.replace(/<[^>]*>/g, '').trim().slice(0, 100) || 'Handcrafted Fine Jewelry',
+        category: categoryName,
         metal: '925 Sterling Silver',
         rating: parseFloat(item.average_rating) || 4.9,
         reviewCount: item.rating_count || 120,
-        badge: item.featured ? 'Bestseller' : 'New Arrival',
-        description: item.description?.replace(/<[^>]*>/g, '') || item.name,
+        badge: isDraft ? 'Draft Preview' : (item.featured ? 'Bestseller' : 'New Arrival'),
+        description: item.description?.replace(/<[^>]*>/g, '').trim() || item.short_description?.replace(/<[^>]*>/g, '').trim() || item.name,
         details: [
           'Solid 925 Sterling Silver with anti-tarnish rhodium / gold finish',
           'Hypoallergenic & Lead-free composition',
@@ -84,12 +90,12 @@ export async function getProducts(): Promise<Product[]> {
             id: `wc-var-${item.id}-silver`,
             name: 'Silver',
             colorHex: '#D8D8D8',
-            priceINR: salePrice || regularPrice,
-            originalPriceINR: regularPrice || salePrice,
+            priceINR: salePrice,
+            originalPriceINR: regularPrice,
             priceUSD: priceUSD,
             originalPriceUSD: originalPriceUSD,
             sku: item.sku || `NIHI-WC-${item.id}`,
-            inStock: item.stock_status === 'instock',
+            inStock: item.stock_status !== 'outofstock',
             images: images,
           },
         ],
@@ -97,12 +103,12 @@ export async function getProducts(): Promise<Product[]> {
           metalType: '925 Pure Silver (3.2g)',
           metalWeightGrams: 3.2,
           metalRatePerGramINR: 320,
-          metalCostINR: Math.round((salePrice || regularPrice) * 0.4),
+          metalCostINR: Math.round(salePrice * 0.4),
           gemstoneDescription: 'AAA+ Swiss Cut Crystals',
-          gemstoneCostINR: Math.round((salePrice || regularPrice) * 0.3),
-          makingChargesINR: Math.round((salePrice || regularPrice) * 0.2),
-          gstINR: Math.round((salePrice || regularPrice) * 0.1),
-          totalINR: salePrice || regularPrice,
+          gemstoneCostINR: Math.round(salePrice * 0.3),
+          makingChargesINR: Math.round(salePrice * 0.2),
+          gstINR: Math.round(salePrice * 0.1),
+          totalINR: salePrice,
         },
         reviews: PRODUCTS[0].reviews,
       };
@@ -111,7 +117,7 @@ export async function getProducts(): Promise<Product[]> {
     return mappedProducts;
   } catch (error) {
     console.error('Failed to fetch from WooCommerce:', error);
-    return [];
+    return PRODUCTS;
   }
 }
 
@@ -125,14 +131,14 @@ export async function getCategories() {
 
   try {
     const auth = 'Basic ' + Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
-    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=true&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
+    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=false&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
 
     const response = await fetch(apiUrl, {
       headers: {
         Authorization: auth,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
 
     if (!response.ok) return [];
@@ -158,7 +164,15 @@ export async function getCategories() {
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const products = await getProducts();
-  const match = products.find((p) => p.slug === slug || p.id === slug || p.id === `wc-${slug}`);
+  const decodedSlug = decodeURIComponent(slug);
+  const match = products.find(
+    (p) =>
+      p.slug === slug ||
+      p.slug === decodedSlug ||
+      p.id === slug ||
+      p.id === `wc-${slug}` ||
+      p.id.replace('wc-', '') === slug
+  );
   if (match) return match;
 
   return PRODUCTS.find((p) => p.slug === slug || p.id === slug);
