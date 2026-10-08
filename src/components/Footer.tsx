@@ -149,9 +149,9 @@ export default function Footer() {
               <Image
                 src="/zynovex-logo.png"
                 alt="Zynovex Technologies"
-                width={20}
-                height={20}
-                className="w-5 h-5 rounded-full object-contain bg-white p-0.5"
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full object-cover shrink-0"
               />
               <span className="text-xs text-blue-400 font-bold tracking-wide">
                 Zynovex Technologies
