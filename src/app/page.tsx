@@ -64,12 +64,13 @@ export default async function HomePage() {
             </div>
 
             {/* Visual Gifting Showcase */}
-            <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden shadow-inner">
+            <div className="relative h-72 sm:h-[400px] w-full rounded-2xl overflow-hidden shadow-md">
               <Image
                 src="https://images.unsplash.com/photo-1513094735237-8f2714d57c13?q=80&w=1000&auto=format&fit=crop"
                 alt="Nihi Studio Luxury Gift Packaging"
                 fill
-                className="object-cover hover:scale-105 transition-transform duration-700"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-top hover:scale-105 transition-transform duration-700"
               />
             </div>
           </div>
