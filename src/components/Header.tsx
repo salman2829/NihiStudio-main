@@ -310,39 +310,60 @@ export default function Header() {
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 bg-white border-b border-gray-200 shadow-xl p-5 space-y-4 max-h-[80vh] overflow-y-auto animate-fadeIn">
+        <div className="lg:hidden fixed inset-x-0 top-16 bg-white/98 backdrop-blur-xl border-b border-gray-200 shadow-2xl p-5 space-y-5 max-h-[85vh] overflow-y-auto animate-fadeIn z-50">
+          {/* Mobile Quick Search */}
+          <div className="relative">
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsSearchOpen(true);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#FAF7F5] text-gray-500 border border-gray-200 text-xs font-medium text-left"
+            >
+              <Search className="w-4 h-4 text-[#E9708A]" />
+              <span>Search solitaire, 925 silver...</span>
+            </button>
+          </div>
+
+          {/* Quick Nav Links */}
           <div className="space-y-2">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">
-              Categories
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+              Collections & Studio
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {CATEGORIES.map((cat) => (
+              {NAV_LINKS.map((link) => (
                 <Link
-                  key={cat.id}
-                  href={`/shop?category=${cat.name}`}
+                  key={link.name}
+                  href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2.5 rounded-lg bg-[#FAF7F5] text-xs font-medium text-gray-800 hover:bg-[#FDF0F3] hover:text-[#E9708A] transition-colors"
+                  className={`p-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-between ${
+                    link.highlight
+                      ? 'bg-[#FDF0F3] text-[#C94D6A] border border-rose-200'
+                      : 'bg-[#FAF7F5] text-gray-800 hover:bg-gray-200'
+                  }`}
                 >
-                  {cat.name}
+                  <span>{link.name}</span>
+                  {link.highlight && <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />}
                 </Link>
               ))}
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-3 space-y-2">
+          {/* Support Links */}
+          <div className="border-t border-gray-100 pt-3 space-y-1.5 text-xs text-gray-700">
             <Link
               href="/about"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-xs font-medium text-gray-700 py-1.5"
+              className="block font-medium py-1.5 hover:text-[#E9708A]"
             >
               About Nihi Studio & Purity Promise
             </Link>
             <Link
               href="/contact"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="block text-xs font-medium text-gray-700 py-1.5"
+              className="block font-medium py-1.5 hover:text-[#E9708A]"
             >
-              Customer Support & Tracking
+              Customer Support & Order Tracking
             </Link>
           </div>
         </div>

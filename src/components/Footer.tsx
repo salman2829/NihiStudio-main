@@ -132,17 +132,31 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <div className="flex flex-wrap items-center gap-4">
+        {/* Bottom Bar & Zynovex Technologies Credit */}
+        <div className="pt-8 border-t border-neutral-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-400">
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 sm:gap-4 text-center md:text-left">
             <p>© 2026 Nihi Studio Fine Jewelry Pvt. Ltd. All rights reserved.</p>
             <span className="hidden sm:inline text-neutral-700">•</span>
-            <Link href="/privacy" className="hover:text-gray-400">DPDP Act 2023 Compliant</Link>
+            <Link href="/privacy" className="hover:text-gray-300 transition-colors">DPDP Act 2023 Compliant</Link>
             <span className="hidden sm:inline text-neutral-700">•</span>
-            <Link href="/terms" className="hover:text-gray-400">Terms</Link>
+            <Link href="/terms" className="hover:text-gray-300 transition-colors">Terms</Link>
           </div>
-          <div className="flex items-center gap-3 text-gray-400 text-[11px]">
-            <span>Razorpay • UPI • Visa • Mastercard • NetBanking</span>
+
+          {/* Built by Zynovex Technologies */}
+          <div className="flex items-center gap-2 bg-[#1A1818] px-4 py-2 rounded-full border border-neutral-800 shadow-sm">
+            <span className="text-[11px] text-gray-400 font-medium">Designed & Developed by</span>
+            <div className="flex items-center gap-1.5 font-bold text-white">
+              <Image
+                src="/zynovex-logo.png"
+                alt="Zynovex Technologies"
+                width={20}
+                height={20}
+                className="w-5 h-5 rounded-full object-contain bg-white p-0.5"
+              />
+              <span className="text-xs text-blue-400 font-bold tracking-wide">
+                Zynovex Technologies
+              </span>
+            </div>
           </div>
         </div>
       </div>
