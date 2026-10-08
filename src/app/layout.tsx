@@ -37,10 +37,20 @@ export const metadata: Metadata = {
     'gold plated necklace',
     'tennis bracelet',
   ],
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.png', type: 'image/png' },
+      { url: '/logo.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'Nihi Studio | Everyday Fine Jewelry',
     description: 'Everyday fine jewelry crafted in pure 925 silver and 18K gold.',
     type: 'website',
+    images: ['/logo.png'],
   },
 };
 
