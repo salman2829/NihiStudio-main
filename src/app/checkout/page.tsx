@@ -79,7 +79,7 @@ const INDIAN_STATES = [
 ];
 
 export default function CheckoutPage() {
-  const { cart, clearCart, getCartTotal, currency, user, savedAddress, setSavedAddress } = useStore();
+  const { cart, clearCart, getCartTotal, currency, user, savedAddress, setSavedAddress, setIsAuthModalOpen } = useStore();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -165,6 +165,13 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Flipkart-style Authentication Guard
+    if (!user) {
+      setIsAuthModalOpen(true, 'login');
+      return;
+    }
+
     setIsProcessing(true);
 
     const fullAddressLine1 = `${formData.houseNo ? `${formData.houseNo}, ` : ''}${formData.streetAddress}`.trim();
@@ -485,12 +492,47 @@ export default function CheckoutPage() {
         <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left: Customer Information & Payment Method */}
           <div className="lg:col-span-7 space-y-6">
+            {/* Flipkart-Style Step 1: Customer Authentication Box */}
+            <div className={`p-6 sm:p-7 rounded-3xl border shadow-xs transition-all ${
+              user ? 'bg-white border-[#EFE9E6]' : 'bg-[#FDF0F3] border-[#E9708A]'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center ${
+                    user ? 'bg-emerald-600 text-white' : 'bg-[#E9708A] text-white animate-pulse'
+                  }`}>
+                    {user ? '✓' : '1'}
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900 flex items-center gap-2">
+                      {user ? `Logged In as ${user.firstName || user.email}` : 'Sign In Required to Place Order'}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      {user ? user.email : 'Sign in to sync your cart, address, and individual order history.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAuthModalOpen(true, 'login')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm ${
+                    user
+                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-[#E9708A] hover:bg-[#d45d77] text-white'
+                  }`}
+                >
+                  {user ? 'Switch Account' : '⚡ Sign In / Register'}
+                </button>
+              </div>
+            </div>
+
             {/* Delivery Address Section */}
             <div className="bg-white p-6 sm:p-8 rounded-3xl border border-[#EFE9E6] shadow-xs space-y-5">
               <div className="flex items-center justify-between border-b border-gray-100 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-[#1A1818] text-white text-xs font-bold flex items-center justify-center">
-                    1
+                    2
                   </div>
                   <h2 className="text-sm font-bold uppercase tracking-wider text-gray-900">
                     Delivery Address
@@ -994,10 +1036,18 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={isProcessing}
-                className="w-full py-4 bg-[#1A1818] hover:bg-black text-white text-xs sm:text-sm font-semibold uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-70 cursor-pointer"
+                className={`w-full py-4 text-white text-xs sm:text-sm font-semibold uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all disabled:opacity-70 cursor-pointer ${
+                  !user
+                    ? 'bg-[#E9708A] hover:bg-[#d45d77]'
+                    : 'bg-[#1A1818] hover:bg-black'
+                }`}
               >
                 {isProcessing ? (
                   <span>Processing Secure Payment...</span>
+                ) : !user ? (
+                  <>
+                    <Lock className="w-4 h-4" /> ⚡ Sign In / Register to Place Order
+                  </>
                 ) : (
                   <>
                     Complete Order <ArrowRight className="w-4 h-4" />

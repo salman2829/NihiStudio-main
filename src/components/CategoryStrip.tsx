@@ -7,6 +7,19 @@ import { Sparkles } from 'lucide-react';
 import { CATEGORIES } from '@/lib/mock-data';
 
 export default function CategoryStrip() {
+  const [categories, setCategories] = React.useState<any[]>(CATEGORIES);
+
+  React.useEffect(() => {
+    fetch('/api/products')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.categories) && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch categories:', err));
+  }, []);
+
   return (
     <section className="py-10 sm:py-14 bg-gradient-to-b from-white via-[#FAF7F5]/50 to-white border-b border-[#EFE9E6]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -24,7 +37,7 @@ export default function CategoryStrip() {
 
         {/* Categories Strip */}
         <div className="flex items-center justify-start sm:justify-center gap-5 sm:gap-10 overflow-x-auto pb-4 pt-2 no-scrollbar px-2">
-          {CATEGORIES.map((category) => (
+          {categories.map((category) => (
             <Link
               key={category.id}
               href={`/shop?category=${encodeURIComponent(category.name)}`}

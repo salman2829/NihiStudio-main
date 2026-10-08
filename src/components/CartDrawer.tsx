@@ -15,6 +15,8 @@ export default function CartDrawer() {
     updateQuantity,
     getCartTotal,
     currency,
+    user,
+    setIsAuthModalOpen,
   } = useStore();
 
   const totals = getCartTotal();
@@ -249,11 +251,19 @@ export default function CartDrawer() {
             </div>
 
             <Link
-              href="/checkout"
-              onClick={() => setIsCartOpen(false)}
+              href={user ? '/checkout' : '#'}
+              onClick={(e) => {
+                if (!user) {
+                  e.preventDefault();
+                  setIsCartOpen(false);
+                  setIsAuthModalOpen(true, 'login');
+                } else {
+                  setIsCartOpen(false);
+                }
+              }}
               className="w-full flex items-center justify-center gap-2 py-3.5 px-4 bg-[#1A1818] hover:bg-black text-white text-xs sm:text-sm font-semibold uppercase tracking-widest rounded-xl transition-all shadow-lg hover:shadow-xl group"
             >
-              Proceed to Secure Checkout
+              {user ? 'Proceed to Secure Checkout' : '⚡ Sign In / Register to Checkout'}
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
 

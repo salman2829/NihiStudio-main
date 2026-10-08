@@ -12,12 +12,22 @@ const POPULAR_SEARCHES = ['Solitaire Ring', 'Heart Pendant', 'Tennis Bracelet', 
 export default function SearchModal() {
   const { isSearchOpen, setIsSearchOpen, currency } = useStore();
   const [query, setQuery] = useState('');
+  const [products, setProducts] = useState<any[]>(PRODUCTS);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isSearchOpen) {
       setTimeout(() => inputRef.current?.focus(), 50);
       document.body.style.overflow = 'hidden';
+
+      fetch('/api/products')
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setProducts(data.products);
+          }
+        })
+        .catch((err) => console.error('Failed to fetch search catalog:', err));
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -27,7 +37,7 @@ export default function SearchModal() {
 
   const filteredProducts = query.trim() === ''
     ? []
-    : PRODUCTS.filter((p) =>
+    : products.filter((p) =>
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         p.category.toLowerCase().includes(query.toLowerCase()) ||
         p.metal.toLowerCase().includes(query.toLowerCase()) ||

@@ -19,9 +19,24 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "nihistudio.com",
       },
+      {
+        protocol: "https",
+        hostname: "lightsalmon-squid-120374.hostingersite.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.hostingersite.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
     ],
   },
 };
 
 export default nextConfig;
-

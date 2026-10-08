@@ -21,17 +21,36 @@ import {
   Info,
 } from 'lucide-react';
 import { PRODUCTS } from '@/lib/mock-data';
+import { Product } from '@/lib/types';
 import { useStore } from '@/store/useStore';
 
 export default function ProductDetailPage() {
   const params = useParams();
   const rawSlug = params?.slug;
   const slug = Array.isArray(rawSlug) ? rawSlug[0] : rawSlug || '';
-  const product = PRODUCTS.find((p) => p.slug === slug || p.id === slug);
 
-  if (!product) {
-    notFound();
-  }
+  const [product, setProduct] = useState<Product | null>(() => PRODUCTS.find((p) => p.slug === slug || p.id === slug) || null);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    if (!slug) return;
+    async function fetchProduct() {
+      try {
+        const res = await fetch(`/api/products/${slug}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.product) {
+            setProduct(data.product);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch product by slug:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProduct();
+  }, [slug]);
 
   const {
     currency,
@@ -40,13 +59,13 @@ export default function ProductDetailPage() {
     isInWishlist,
     setIsSizeModalOpen,
     setSizeModalType,
+    user,
+    setIsAuthModalOpen,
   } = useStore();
 
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState<string>(
-    product.hasSizes && product.availableSizes ? product.availableSizes[0] : ''
-  );
+  const [selectedSize, setSelectedSize] = useState<string>('');
   const [customEngraving, setCustomEngraving] = useState('');
   const [enableEngraving, setEnableEngraving] = useState(false);
   const [giftWrap, setGiftWrap] = useState(false);
@@ -54,13 +73,28 @@ export default function ProductDetailPage() {
   const [pincodeStatus, setPincodeStatus] = useState<string | null>(null);
   const [isPriceAccordionOpen, setIsPriceAccordionOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
-
-  // Zoom Effect State
   const [zoomStyle, setZoomStyle] = useState<React.CSSProperties>({ display: 'none' });
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  const selectedVariant = product.variants[selectedVariantIndex] || product.variants[0];
-  const images = selectedVariant.images.length > 0 ? selectedVariant.images : [product.featuredImage];
+  React.useEffect(() => {
+    if (product?.hasSizes && product?.availableSizes?.[0]) {
+      setSelectedSize(product.availableSizes[0]);
+    }
+  }, [product]);
+
+  if (!product) {
+    if (loading) {
+      return (
+        <div className="min-h-[60vh] flex items-center justify-center py-20 text-gray-400 text-sm">
+          Loading product details...
+        </div>
+      );
+    }
+    notFound();
+  }
+
+  const selectedVariant = product.variants?.[selectedVariantIndex] || product.variants?.[0];
+  const images = (selectedVariant?.images && selectedVariant.images.length > 0) ? selectedVariant.images : [product.featuredImage];
   const currentImage = images[selectedImageIndex] || images[0];
 
   const isWishlisted = isInWishlist(product.id);
@@ -139,16 +173,16 @@ export default function ProductDetailPage() {
         </nav>
 
         {/* Product Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Image Gallery with Magnifier Zoom */}
-          <div className="lg:col-span-7 flex flex-col-reverse sm:flex-row gap-4">
+          <div className="lg:col-span-5 flex flex-col-reverse sm:flex-row gap-4">
             {/* Thumbnails list */}
             <div className="flex sm:flex-col gap-3 overflow-x-auto sm:overflow-y-auto no-scrollbar shrink-0">
-              {images.map((img, idx) => (
+              {images.map((img: string, idx: number) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImageIndex(idx)}
-                  className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-[#FAF7F5] border-2 transition-all shrink-0 ${
+                  className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-[#FAF7F5] border-2 transition-all shrink-0 ${
                     selectedImageIndex === idx
                       ? 'border-[#E9708A] shadow-md scale-95'
                       : 'border-transparent hover:border-gray-300 opacity-80 hover:opacity-100'
@@ -160,7 +194,7 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Main Interactive Magnifier View */}
-            <div className="flex-1 relative aspect-square rounded-3xl overflow-hidden bg-[#FAF7F5] border border-[#EFE9E6]">
+            <div className="flex-1 relative aspect-square max-w-md max-h-[440px] rounded-3xl overflow-hidden bg-[#FAF7F5] border border-[#EFE9E6] mx-auto sm:mx-0">
               <div
                 ref={imageContainerRef}
                 onMouseMove={handleMouseMove}
@@ -211,7 +245,7 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Right Column: Details & Customizer */}
-          <div className="lg:col-span-5 space-y-6">
+          <div className="lg:col-span-7 space-y-6">
             {/* Title & Ratings */}
             <div className="space-y-2 border-b border-gray-100 pb-4">
               <div className="flex items-center gap-2">
@@ -274,7 +308,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                {product.variants.map((v, idx) => (
+                {product.variants.map((v: any, idx: number) => (
                   <button
                     key={v.id}
                     onClick={() => {
@@ -311,7 +345,7 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
-                  {product.availableSizes.map((s) => (
+                  {product.availableSizes.map((s: string) => (
                     <button
                       key={s}
                       onClick={() => setSelectedSize(s)}
@@ -424,11 +458,17 @@ export default function ProductDetailPage() {
               </button>
 
               <Link
-                href="/checkout"
-                onClick={handleAddToCart}
+                href={user ? '/checkout' : '#'}
+                onClick={(e) => {
+                  handleAddToCart();
+                  if (!user) {
+                    e.preventDefault();
+                    setIsAuthModalOpen(true, 'login');
+                  }
+                }}
                 className="w-full py-3.5 px-6 rounded-2xl text-xs sm:text-sm font-semibold uppercase tracking-widest flex items-center justify-center gap-2 bg-[#E9708A] hover:bg-[#C94D6A] text-white shadow-md transition-all"
               >
-                <Zap className="w-4 h-4" /> 1-Click Fast Checkout
+                <Zap className="w-4 h-4" /> {user ? '1-Click Fast Checkout' : '⚡ Sign In / Register to Checkout'}
               </Link>
             </div>
 
@@ -548,7 +588,7 @@ export default function ProductDetailPage() {
                   Key Specifications:
                 </h3>
                 <ul className="space-y-2">
-                  {product.details.map((detail, idx) => (
+                  {product.details.map((detail: string, idx: number) => (
                     <li key={idx} className="flex items-start gap-2.5 text-xs text-gray-700">
                       <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
                       <span>{detail}</span>
@@ -571,7 +611,7 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="space-y-3">
-                {product.reviews.map((rev) => (
+                {product.reviews.map((rev: any) => (
                   <div
                     key={rev.id}
                     className="p-4 rounded-2xl bg-[#FAF7F5] border border-[#EFE9E6] space-y-2"

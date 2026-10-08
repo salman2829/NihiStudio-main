@@ -106,10 +106,46 @@ export async function getProducts(): Promise<Product[]> {
       };
     });
 
-    return [PRODUCTS[0], ...mappedProducts];
+    return mappedProducts.length > 0 ? mappedProducts : PRODUCTS;
   } catch (error) {
     console.error('Failed to fetch from WooCommerce:', error);
     return PRODUCTS;
+  }
+}
+
+/**
+ * Fetch product categories dynamically from WooCommerce API
+ */
+export async function getCategories() {
+  if (!isWooCommerceConfigured()) {
+    return [];
+  }
+
+  try {
+    const auth = Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
+    const response = await fetch(`${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=true`, {
+      headers: {
+        Authorization: `Basic ${auth}`,
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 300 },
+    });
+
+    if (!response.ok) return [];
+    const data = await response.json();
+    if (!Array.isArray(data)) return [];
+
+    return data.map((cat: any) => ({
+      id: String(cat.id),
+      name: cat.name,
+      slug: cat.slug,
+      image: cat.image?.src || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
+      itemCount: cat.count || 0,
+      description: cat.description?.replace(/<[^>]*>/g, '') || `Handcrafted ${cat.name}`,
+    }));
+  } catch (err) {
+    console.error('Error fetching WooCommerce categories:', err);
+    return [];
   }
 }
 

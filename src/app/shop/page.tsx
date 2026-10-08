@@ -17,11 +17,41 @@ function ShopContent() {
 
   const { currency, wishlist } = useStore();
 
+  const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>(CATEGORIES);
+  const [isLoading, setIsLoading] = useState(true);
+
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedMetal, setSelectedMetal] = useState<string>(initialMetal);
   const [sortBy, setSortBy] = useState<string>('featured');
   const [showOnlyWishlist, setShowOnlyWishlist] = useState<boolean>(filterParam === 'wishlist');
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Fetch Live Products from WooCommerce / API
+  React.useEffect(() => {
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/products');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setProducts(data.products);
+          } else {
+            setProducts(PRODUCTS);
+          }
+          if (Array.isArray(data.categories) && data.categories.length > 0) {
+            setCategories(data.categories);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch shop products:', err);
+        setProducts(PRODUCTS);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadCatalog();
+  }, []);
 
   // Sync when searchParams change
   React.useEffect(() => {
@@ -32,22 +62,22 @@ function ShopContent() {
 
   // Filtered & Sorted Products
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       if (showOnlyWishlist && !wishlist.includes(p.id)) return false;
       if (selectedCategory !== 'all' && p.category.toLowerCase() !== selectedCategory.toLowerCase()) return false;
       if (selectedMetal !== 'all' && p.metal !== selectedMetal) return false;
       return true;
     }).sort((a, b) => {
-      const priceA = currency === 'INR' ? a.variants[0].priceINR : a.variants[0].priceUSD;
-      const priceB = currency === 'INR' ? b.variants[0].priceINR : b.variants[0].priceUSD;
+      const priceA = currency === 'INR' ? a.variants[0]?.priceINR || 0 : a.variants[0]?.priceUSD || 0;
+      const priceB = currency === 'INR' ? b.variants[0]?.priceINR || 0 : b.variants[0]?.priceUSD || 0;
 
       if (sortBy === 'price-low') return priceA - priceB;
       if (sortBy === 'price-high') return priceB - priceA;
       if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'newest') return b.id.localeCompare(a.id);
+      if (sortBy === 'newest') return String(b.id).localeCompare(String(a.id));
       return 0; // featured
     });
-  }, [selectedCategory, selectedMetal, sortBy, showOnlyWishlist, wishlist, currency]);
+  }, [products, selectedCategory, selectedMetal, sortBy, showOnlyWishlist, wishlist, currency]);
 
   const clearFilters = () => {
     setSelectedCategory('all');
@@ -57,6 +87,8 @@ function ShopContent() {
   };
 
   const hasActiveFilters = selectedCategory !== 'all' || selectedMetal !== 'all' || showOnlyWishlist;
+
+  const activeCategoryList = categories.length > 0 ? categories : CATEGORIES;
 
   return (
     <div className="bg-[#FAF7F5]/40 min-h-screen py-8 sm:py-12">
@@ -72,41 +104,6 @@ function ShopContent() {
           <p className="text-xs sm:text-sm text-gray-500 mt-2">
             925 Hallmarked silver and 18K gold vermeil engineered with 6-month anti-tarnish protection.
           </p>
-
-          {/* Special Live Testing Banner */}
-          <div className="mt-4 p-4 bg-white border-2 border-dashed border-[#E9708A] rounded-2xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
-            <div>
-              <p className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                Testing Live Razorpay Gateway?
-              </p>
-              <p className="text-[11px] text-gray-500">
-                Click this button to load a ₹1 sample product and test the live UPI / Card checkout.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                const { addToCart, setIsCartOpen } = useStore.getState();
-                addToCart({
-                  productId: 'nihi-test-1',
-                  productName: '₹1 Live Payment Verification Item',
-                  slug: 'nihi-test-verification-item',
-                  variantId: 'var-test-1',
-                  variantName: 'Test Sample',
-                  priceINR: 1,
-                  priceUSD: 1,
-                  quantity: 1,
-                  giftWrap: false,
-                  image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=600&auto=format&fit=crop',
-                });
-                setIsCartOpen(true);
-              }}
-              className="shrink-0 px-4 py-2 bg-[#E9708A] hover:bg-[#d45d77] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-md"
-            >
-              ⚡ Add ₹1 Test Item
-            </button>
-          </div>
         </div>
 
         {/* Filter / Sort Control Bar */}
@@ -132,7 +129,7 @@ function ShopContent() {
             >
               All
             </button>
-            {CATEGORIES.map((cat) => (
+            {activeCategoryList.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.name)}
