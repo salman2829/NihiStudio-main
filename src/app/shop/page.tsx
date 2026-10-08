@@ -34,10 +34,8 @@ function ShopContent() {
         const res = await fetch('/api/products');
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.products) && data.products.length > 0) {
+          if (Array.isArray(data.products)) {
             setProducts(data.products);
-          } else {
-            setProducts(PRODUCTS);
           }
           if (Array.isArray(data.categories) && data.categories.length > 0) {
             setCategories(data.categories);
@@ -45,7 +43,6 @@ function ShopContent() {
         }
       } catch (err) {
         console.error('Failed to fetch shop products:', err);
-        setProducts(PRODUCTS);
       } finally {
         setIsLoading(false);
       }

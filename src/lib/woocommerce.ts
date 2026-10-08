@@ -13,7 +13,7 @@ export function isWooCommerceConfigured(): boolean {
 }
 
 /**
- * Fetch all products from WooCommerce REST API or fallback to mock data
+ * Fetch all products from WooCommerce REST API (using URL query parameters for Hostinger compatibility)
  */
 export async function getProducts(): Promise<Product[]> {
   if (!isWooCommerceConfigured()) {
@@ -21,35 +21,37 @@ export async function getProducts(): Promise<Product[]> {
   }
 
   try {
-    const auth = Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
-    const response = await fetch(`${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products?per_page=50&status=publish`, {
+    const auth = 'Basic ' + Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
+    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products?per_page=50&status=publish&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
+
+    const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Basic ${auth}`,
+        Authorization: auth,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 60 },
+      next: { revalidate: 30 },
     });
 
     if (!response.ok) {
-      console.warn('WooCommerce API error, falling back to mock catalog:', response.statusText);
-      return PRODUCTS;
+      console.warn('WooCommerce API error response:', response.status, response.statusText);
+      return [];
     }
 
     const data = await response.json();
-    if (!Array.isArray(data) || data.length === 0) {
-      return PRODUCTS;
+    if (!Array.isArray(data)) {
+      return [];
     }
 
     // Map WooCommerce product format to Nihi Studio product model
     const mappedProducts: Product[] = data.map((item: any, index: number): Product => {
-      const regularPrice = parseFloat(item.regular_price || item.price || '2999');
-      const salePrice = parseFloat(item.sale_price || item.price || '2499');
-      const priceUSD = Math.round(salePrice / 80);
-      const originalPriceUSD = Math.round(regularPrice / 80);
+      const regularPrice = parseFloat(item.regular_price || item.price || '0');
+      const salePrice = parseFloat(item.sale_price || item.price || '0');
+      const priceUSD = Math.round((salePrice || regularPrice) / 80);
+      const originalPriceUSD = Math.round((regularPrice || salePrice) / 80);
 
       const images = item.images?.length > 0 
         ? item.images.map((img: any) => img.src)
-        : [PRODUCTS[index % PRODUCTS.length].featuredImage];
+        : ['https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=1000&auto=format&fit=crop'];
 
       return {
         id: `wc-${item.id}`,
@@ -82,8 +84,8 @@ export async function getProducts(): Promise<Product[]> {
             id: `wc-var-${item.id}-silver`,
             name: 'Silver',
             colorHex: '#D8D8D8',
-            priceINR: salePrice,
-            originalPriceINR: regularPrice,
+            priceINR: salePrice || regularPrice,
+            originalPriceINR: regularPrice || salePrice,
             priceUSD: priceUSD,
             originalPriceUSD: originalPriceUSD,
             sku: item.sku || `NIHI-WC-${item.id}`,
@@ -95,21 +97,21 @@ export async function getProducts(): Promise<Product[]> {
           metalType: '925 Pure Silver (3.2g)',
           metalWeightGrams: 3.2,
           metalRatePerGramINR: 320,
-          metalCostINR: 1024,
+          metalCostINR: Math.round((salePrice || regularPrice) * 0.4),
           gemstoneDescription: 'AAA+ Swiss Cut Crystals',
-          gemstoneCostINR: 850,
-          makingChargesINR: 500,
-          gstINR: 125,
-          totalINR: salePrice,
+          gemstoneCostINR: Math.round((salePrice || regularPrice) * 0.3),
+          makingChargesINR: Math.round((salePrice || regularPrice) * 0.2),
+          gstINR: Math.round((salePrice || regularPrice) * 0.1),
+          totalINR: salePrice || regularPrice,
         },
         reviews: PRODUCTS[0].reviews,
       };
     });
 
-    return mappedProducts.length > 0 ? mappedProducts : PRODUCTS;
+    return mappedProducts;
   } catch (error) {
     console.error('Failed to fetch from WooCommerce:', error);
-    return PRODUCTS;
+    return [];
   }
 }
 
@@ -122,13 +124,15 @@ export async function getCategories() {
   }
 
   try {
-    const auth = Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
-    const response = await fetch(`${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=true`, {
+    const auth = 'Basic ' + Buffer.from(`${WOOCOMMERCE_CONSUMER_KEY}:${WOOCOMMERCE_CONSUMER_SECRET}`).toString('base64');
+    const apiUrl = `${WOOCOMMERCE_API_URL}/wp-json/wc/v3/products/categories?per_page=100&hide_empty=true&consumer_key=${WOOCOMMERCE_CONSUMER_KEY}&consumer_secret=${WOOCOMMERCE_CONSUMER_SECRET}`;
+
+    const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Basic ${auth}`,
+        Authorization: auth,
         'Content-Type': 'application/json',
       },
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) return [];
@@ -153,9 +157,9 @@ export async function getCategories() {
  * Fetch a single product by slug
  */
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const directMatch = PRODUCTS.find((p) => p.slug === slug);
-  if (directMatch) return directMatch;
-
   const products = await getProducts();
-  return products.find((p) => p.slug === slug);
+  const match = products.find((p) => p.slug === slug || p.id === slug || p.id === `wc-${slug}`);
+  if (match) return match;
+
+  return PRODUCTS.find((p) => p.slug === slug || p.id === slug);
 }
